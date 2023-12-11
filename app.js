@@ -2,20 +2,22 @@ const express = require("express");
 const app = express();
 // 引入 createVLESSServer 函数
 const { createVLESSServer } = require("@3kmfi6hp/nodejs-proxy");
-// 定义端口和 UUID
-const port = process.env.PORT || 3001;
+
+// 定义 Express 端口和 UUID
+const expressPort = process.env.EXPRESS_PORT || 3001;
 const uuid = process.env.UUID || "d342d11e-d424-4583-b36e-524ab1f0afa4";
 
-// 调用函数启动 VLESS 服务器
-createVLESSServer(port, uuid);
-
+// 调用函数启动 VLESS 服务器，定义 VLESS 端口
+const vlessPort = process.env.VLESS_PORT || 7890;
+createVLESSServer(vlessPort, uuid);
 
 app.get("/", (req, res) => res.type('html').send(html));
 
-const server = app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+const expressServer = app.listen(expressPort, () => console.log(`Express app listening on port ${expressPort}!`));
 
-server.keepAliveTimeout = 120 * 1000;
-server.headersTimeout = 120 * 1000;
+expressServer.keepAliveTimeout = 120 * 1000;
+expressServer.headersTimeout = 120 * 1000;
+
 
 const html = `
 <!DOCTYPE html>
