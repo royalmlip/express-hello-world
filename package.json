@@ -7,12 +7,14 @@
   "author": "Render Developers",
   "license": "MIT",
   "private": false,
-  "scripts": {
+  "scripts"    "http-proxy": "latest",
+    "ws": "^8.13.0": {
     "start": "node app.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "@3kmfi6hp/nodejs-proxy": "latest"
+    "http-proxy": "latest",
+    "ws": "^8.13.0"
   },
   "engines": {
     "node": ">=14"

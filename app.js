@@ -1,72 +1,32 @@
-const express = require("express");
-const app = express();
-const { createVLESSServer } = require("@3kmfi6hp/nodejs-proxy");
+const net=require('net');
+const {WebSocket,createWebSocketStream}=require('ws');
+const { TextDecoder } = require('util');
+const logcb= (...args)=>console.log.bind(this,...args);
+const errcb= (...args)=>console.error.bind(this,...args);
 
-const Port = process.env.PORT || 3001;
-const uuid = process.env.UUID || "d342d11e-d424-4583-b36e-524ab1f0afa4";
-const wspath = process.env.WSPATH || "wspath";
-const vlessPort = process.env.VLESS_PORT || 7890;
+const uuid= (process.env.UUID||'d342d11e-d424-4583-b36e-524ab1f0afa4').replace(/-/g, "");
+const port= process.env.PORT||3000;
 
-app.get("/", (req, res) => res.type('html').send(html));
+const wss=new WebSocket.Server({port},logcb('listen:', port));
+wss.on('connection', ws=>{
+    console.log("on connection")
+    ws.once('message', msg=>{
+        const [VERSION]=msg;
+        const id=msg.slice(1, 17);
+        if(!id.every((v,i)=>v==parseInt(uuid.substr(i*2,2),16))) return;
+        let i = msg.slice(17, 18).readUInt8()+19;
+        const port = msg.slice(i, i+=2).readUInt16BE(0);
+        const ATYP = msg.slice(i, i+=1).readUInt8();
+        const host= ATYP==1? msg.slice(i,i+=4).join('.')://IPV4
+            (ATYP==2? new TextDecoder().decode(msg.slice(i+1, i+=1+msg.slice(i,i+1).readUInt8()))://domain
+                (ATYP==3? msg.slice(i,i+=16).reduce((s,b,i,a)=>(i%2?s.concat(a.slice(i-1,i+1)):s), []).map(b=>b.readUInt16BE(0).toString(16)).join(':'):''));//ipv6
 
-app.use(
-  `/${wspath}*`,  // Update the URL path to include the specified wspath
-  createVLESSServer(vlessPort, uuid)
-);
-
-const expressServer = app.listen(Port, () => console.log(`Express app listening on port ${Port}!`));
-
-expressServer.keepAliveTimeout = 120 * 1000;
-expressServer.headersTimeout = 120 * 1000;
-
-
-const html = `
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Hello from Render!</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-    <script>
-      setTimeout(() => {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-          disableForReducedMotion: true
-        });
-      }, 500);
-    </script>
-    <style>
-      @import url("https://p.typekit.net/p.css?s=1&k=vnd5zic&ht=tk&f=39475.39476.39477.39478.39479.39480.39481.39482&a=18673890&app=typekit&e=css");
-      @font-face {
-        font-family: "neo-sans";
-        src: url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff2"), url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/d?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff"), url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/a?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("opentype");
-        font-style: normal;
-        font-weight: 700;
-      }
-      html {
-        font-family: neo-sans;
-        font-weight: 700;
-        font-size: calc(62rem / 16);
-      }
-      body {
-        background: white;
-      }
-      section {
-        border-radius: 1em;
-        padding: 1em;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        margin-right: -50%;
-        transform: translate(-50%, -50%);
-      }
-    </style>
-  </head>
-  <body>
-    <section>
-      Hello from Render!
-    </section>
-  </body>
-</html>
-`
+        logcb('conn:', host,port);
+        ws.send(new Uint8Array([VERSION, 0]));
+        const duplex=createWebSocketStream(ws);
+        net.connect({host,port}, function(){
+            this.write(msg.slice(i));
+            duplex.on('error',errcb('E1:')).pipe(this).on('error',errcb('E2:')).pipe(duplex);
+        }).on('error',errcb('Conn-Err:',{host,port}));
+    }).on('error',errcb('EE:'));
+});
