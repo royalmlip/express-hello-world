@@ -1,26 +1,18 @@
 const express = require("express");
 const app = express();
-// 引入 createVLESSServer 函数
 const { createVLESSServer } = require("@3kmfi6hp/nodejs-proxy");
 
-const { createProxyMiddleware } = require("http-proxy-middleware");
-// 定义 Express 端口和 UUID
 const Port = process.env.PORT || 3001;
 const uuid = process.env.UUID || "d342d11e-d424-4583-b36e-524ab1f0afa4";
-const wspath = process.env.WSPATH || "wspath"
-
-// 调用函数启动 VLESS 服务器，定义 VLESS 端口
+const wspath = process.env.WSPATH || "wspath";
 const vlessPort = process.env.VLESS_PORT || 7890;
-
 
 app.get("/", (req, res) => res.type('html').send(html));
 
-//以下是web.js模块的路由重写
-app.use( /* 具体配置项迁移参见 https://github.com/chimurai/http-proxy-middleware/blob/master/MIGRATION.md */
-  '/' + wspath + '*',	/*代理websocket */
+app.use(
+  `/${wspath}*`,  // Update the URL path to include the specified wspath
   createVLESSServer(vlessPort, uuid)
 );
-
 
 const expressServer = app.listen(Port, () => console.log(`Express app listening on port ${Port}!`));
 
