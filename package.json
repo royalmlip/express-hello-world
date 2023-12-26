@@ -1,22 +1,14 @@
 {
-  "name": "express-hello-world",
+  "name": "nodejs-proxy",
   "version": "1.0.0",
-  "description": "Express Hello World on Render",
+  "description": "",
   "main": "app.js",
-  "repository": "https://github.com/render-examples/express-hello-world",
-  "author": "Render Developers",
-  "license": "MIT",
-  "private": false,
-  "scripts"    "http-proxy": "latest",
-    "ws": "^8.13.0": {
-    "start": "node app.js"
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "express": "^4.18.2",
     "http-proxy": "latest",
     "ws": "^8.13.0"
-  },
-  "engines": {
-    "node": ">=14"
   }
 }
